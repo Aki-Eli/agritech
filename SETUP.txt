@@ -1,0 +1,131 @@
+================================================================
+  AGRI-TECH — SETUP GUIDE
+================================================================
+Make sure these are installed before starting:
+
+  - Node.js  v18 or higher   → https://nodejs.org
+  - npm      (comes with Node.js)
+  - Git      (optional)      → https://git-scm.com
+
+You also need:
+  - A MongoDB connection string (MongoDB Atlas is free)
+      → https://www.mongodb.com/atlas
+  - An OpenWeatherMap API key (free tier is enough)
+      → https://openweathermap.org/api
+
+
+================================================================
+  STEP 1 — BACKEND SETUP
+================================================================
+
+1. Open a terminal and go into the backend folder:
+
+     cd agri-tech/backend
+
+2. Install dependencies:
+
+     npm install
+
+3. Create a file named exactly:  .env
+   (no extension, just .env) inside the backend folder.
+   Paste this into it and fill in your own values:
+
+     PORT=5000
+     MONGO_URI=your_mongodb_connection_string_here
+     JWT_SECRET=any_long_random_string_here
+     JWT_EXPIRE=7d
+     OPENWEATHER_API_KEY=your_openweathermap_api_key_here
+
+   Example MONGO_URI (MongoDB Atlas):
+     mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/agritech?retryWrites=true&w=majority
+
+   Example JWT_SECRET (just make something up):
+     agritech_super_secret_key_2024
+
+
+4. Start the backend:
+
+     npm run dev        ← for development (auto-restarts on changes)
+     npm start          ← for normal start
+
+   You should see:
+     MONGO_URI: mongodb+srv://...
+     PORT: 5000
+     ✅ MongoDB connected
+     🚀 Server running on port 5000
+
+
+================================================================
+  STEP 2 — FRONTEND SETUP
+================================================================
+
+1. Open a NEW terminal and go into the frontend folder:
+
+     cd agri-tech/frontend
+
+2. Install dependencies:
+
+     npm install
+
+3. Start the frontend:
+
+     npm start
+
+   This opens the app at:  http://localhost:3000
+   The frontend talks to the backend at:  http://localhost:5000
+   (this is already configured in frontend/package.json as "proxy")
+
+
+================================================================
+  STEP 3 — FIRST TIME USE
+================================================================
+
+1. Go to http://localhost:3000
+2. Click "Get Started Free" to register
+3. Register as Admin first — the very first admin account is
+   approved automatically without needing approval.
+4. Log in as admin, then go to Users to approve farmer accounts.
+
+To seed the marketplace with products (optional):
+  - Make sure the backend is running
+  - In the backend folder, run:
+
+      node importProducts.js
+
+
+================================================================
+  RUNNING BOTH SERVERS
+================================================================
+
+You need TWO terminals open at the same time:
+
+  Terminal 1 (backend):
+    cd agri-tech/backend
+    npm run dev
+
+  Terminal 2 (frontend):
+    cd agri-tech/frontend
+    npm start
+
+
+================================================================
+  COMMON ISSUES
+================================================================
+
+"MONGO_URI is not defined"
+  → Your .env file is missing or in the wrong folder.
+    It must be inside agri-tech/backend/.env
+
+"Cannot connect to MongoDB"
+  → Check your MONGO_URI in .env. Make sure your IP is
+    whitelisted in MongoDB Atlas (Network Access → Add IP).
+
+"Port 5000 already in use"
+  → Change PORT=5001 in .env and update the proxy in
+    frontend/package.json to "proxy": "http://localhost:5001"
+
+Weather page shows no data
+  → Your OPENWEATHER_API_KEY is missing or invalid.
+    Get a free key at https://openweathermap.org/api
+
+================================================================
