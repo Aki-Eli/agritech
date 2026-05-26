@@ -7,10 +7,11 @@ import axios from 'axios';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmModal';
 
-// Set token globally before React renders
+// Restore the Authorization header from localStorage before React renders,
+// so any early axios calls are authenticated.
 const token = localStorage.getItem('token');
 if (token) {
-  axios.defaults.headers.common['x-auth-token'] = token;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

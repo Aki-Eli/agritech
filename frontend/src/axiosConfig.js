@@ -1,13 +1,12 @@
+/**
+ * Axios bootstrap.
+ * Restores the Authorization header from localStorage on page load so that
+ * any axios call made before AuthContext mounts still carries the token.
+ * AuthContext is the authoritative source of truth for auth state.
+ */
 import axios from 'axios';
 
-// Read token from localStorage and set it as default header
 const token = localStorage.getItem('token');
 if (token) {
-  axios.defaults.headers.common['x-auth-token'] = token;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
-
-// Optional: log every request for debugging
-axios.interceptors.request.use(config => {
-  console.log('Request:', config.method.toUpperCase(), config.url, 'Token:', config.headers['x-auth-token'] ? 'present' : 'missing');
-  return config;
-});

@@ -82,12 +82,16 @@ const FarmerDashboard = () => {
   const [analytics, setAnalytics]       = useState(null);
   const [loading, setLoading]           = useState(true);
 
-  useEffect(() => { fetchAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // fetchAll is defined once and never changes — safe to omit from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchAll(); }, []);
 
-  // Re-aggregate when farm selection changes (without re-fetching from server)
+  // Re-aggregate when farm selection changes (without re-fetching from server).
+  // farms and aggregateFarmData are stable within a render cycle.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (farms.length > 0) aggregateFarmData(farms, selectedFarmId);
-  }, [selectedFarmId]); // eslint-disable-line
+  }, [selectedFarmId]);
 
   /* ── Fetch everything once ── */
   const fetchAll = async () => {

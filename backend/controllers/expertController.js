@@ -1,43 +1,65 @@
+/**
+ * Expert controller.
+ * Manages expert profiles available for consultation bookings.
+ * Read access is open to all authenticated users; write operations are admin-only.
+ */
 const Expert = require('../models/Expert');
 
-// Public (authenticated): list all available experts
+/**
+ * GET /api/experts
+ * Returns all expert profiles sorted alphabetically by name.
+ */
 exports.getExperts = async (req, res) => {
   try {
-    const experts = await Expert.find().sort({ name: 1 });
+    const experts = await Expert.find().sort({ name: 1 }).lean();
     res.json(experts);
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    console.error('getExperts error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Admin: create expert profile
+/**
+ * POST /api/experts
+ * Admin only — creates a new expert profile.
+ */
 exports.createExpert = async (req, res) => {
   try {
     const expert = new Expert(req.body);
     await expert.save();
     res.status(201).json(expert);
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    console.error('createExpert error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Admin: update expert profile
+/**
+ * PUT /api/experts/:id
+ * Admin only — updates an existing expert profile.
+ */
 exports.updateExpert = async (req, res) => {
   try {
     const expert = await Expert.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!expert) return res.status(404).json({ msg: 'Expert not found' });
     res.json(expert);
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    console.error('updateExpert error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Admin: delete expert profile
+/**
+ * DELETE /api/experts/:id
+ * Admin only — removes an expert profile.
+ */
 exports.deleteExpert = async (req, res) => {
   try {
-    await Expert.findByIdAndDelete(req.params.id);
-    res.json({ msg: 'Expert deleted' });
+    const expert = await Expert.findByIdAndDelete(req.params.id);
+    if (!expert) return res.status(404).json({ msg: 'Expert not found' });
+    res.json({ msg: 'Expert deleted successfully' });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    console.error('deleteExpert error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };

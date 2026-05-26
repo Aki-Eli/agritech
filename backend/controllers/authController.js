@@ -1,83 +1,117 @@
+/**
+ * Authentication controller.
+ * Handles user registration, login, and session retrieval.
+ */
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('../utils/tokenHelper');
 
+/**
+ * POST /api/auth/register
+ * Creates a new user account. Farmers require admin approval before they can log in.
+ * The very first admin account is auto-approved to bootstrap the system.
+ */
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
+
+  // Basic input validation
+  if (!name || !email || !password) {
+    return res.status(400).json({ msg: 'Name, email, and password are required' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ msg: 'Password must be at least 6 characters' });
+  }
+
   try {
-    let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ msg: 'User already exists' });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) return res.status(400).json({ msg: 'An account with that email already exists' });
 
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
-
-    // Determine approval:
-    // - Farmers always start unapproved (need admin approval)
-    // - First admin ever is auto-approved (bootstrapping)
-    // - Any subsequent admin requires approval from an existing admin
+    // Determine approval status:
+    // - Farmers always start unapproved (admin must approve)
+    // - The very first admin is auto-approved to bootstrap the system
+    // - Subsequent admins require approval from an existing admin
     let approved = false;
-    if (role === 'admin') {
+    const assignedRole = role === 'admin' ? 'admin' : 'farmer';
+    if (assignedRole === 'admin') {
       const existingAdminCount = await User.countDocuments({ role: 'admin' });
-      approved = existingAdminCount === 0; // only auto-approve the very first admin
+      approved = existingAdminCount === 0;
     }
 
-    user = new User({ name, email, password: hashed, role: role || 'farmer', approved });
+    // Password is hashed automatically by the User model's pre-save hook
+    const user = new User({ name, email, password, role: assignedRole, approved });
     await user.save();
 
-    // If not approved, return info without a token so they can't log in yet
     if (!approved) {
       return res.status(201).json({
-        msg: role === 'admin'
+        msg: assignedRole === 'admin'
           ? 'Admin account created. An existing admin must approve your account before you can log in.'
           : 'Account created. An admin must approve your account before you can log in.',
         approved: false
       });
     }
 
-    const payload = { id: user.id, role: user.role };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name, email, role: user.role, approved: user.approved } });
+    // Auto-approved (first admin): return a token so they can log in immediately
+    const token = generateToken(user);
+    res.status(201).json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, approved: user.approved }
+    });
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error('Register error:', err.message);
+    res.status(500).json({ msg: 'Server error during registration' });
   }
 };
 
+/**
+ * POST /api/auth/login
+ * Authenticates a user and returns a JWT on success.
+ */
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ msg: 'Email and password are required' });
+  }
+
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(400).json({ msg: 'Invalid credentials' });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
 
-    // Check banned before approved — gives a clearer message
+    // Check banned before approved — gives a clearer error message
     if (user.banned) {
-      return res.status(403).json({
-        msg: 'Your account has been suspended.',
-        banned: true
-      });
+      return res.status(403).json({ msg: 'Your account has been suspended.', banned: true });
     }
 
     if (!user.approved) {
       return res.status(401).json({
-        msg: 'Account not approved by admin. Please wait for an admin to approve your account.'
+        msg: 'Your account is pending admin approval. Please wait for an admin to approve your account.'
       });
     }
 
-    const payload = { id: user.id, role: user.role };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, email, role: user.role } });
+    const token = generateToken(user);
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error('Login error:', err.message);
+    res.status(500).json({ msg: 'Server error during login' });
   }
 };
 
+/**
+ * GET /api/auth/me
+ * Returns the currently authenticated user's profile (no password).
+ */
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-password').lean();
+    if (!user) return res.status(404).json({ msg: 'User not found' });
     res.json(user);
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error('getMe error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
