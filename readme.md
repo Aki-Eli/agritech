@@ -1,21 +1,12 @@
-🌱 Agritech Platform
+# Agri-Tech
 
-A comprehensive, full-stack MERN application engineered to empower farmers and administrators. The platform includes an integrated marketplace, farm activity logs, real-time crop management, pest alerts, dynamic weather tracking, and an expert consultation system.
+The application simplifies the life of farmers by offering features such as a farm dashboard, crop monitoring, weather updates, and access to expert advice. With modules for resource purchase, community forums, and data analytics, the app creates a full ecosystem for agricultural productivity. The backend is developed using the MVC pattern for scalability and maintainability. Admins manage system content and user activities, while farmers benefit from personalized features like real-time alerts, field tracking, and resource planning.
+Each user type — farmers and admins — has a dedicated interface to streamline their workflows and responsibilities. The system stores and processes large volumes of agricultural data, helping users make evidence-based decisions. Security and role-based access ensure safe usage and data protection. Overall, the platform aims to digitally transform farming operations
 
----
 
-## 🛠️ Tech Stack
-
-- **Frontend:** React.js, Tailwind CSS, Axios, React Router, Context API
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB via Mongoose ODM
-- **Authentication:** Stateful JSON Web Tokens (JWT) with secure middleware
+**Status:** planning
+**Domain:** Sustainability & Green Tech
+**Progress:** 0%
 
 ---
-
-## 📂 Project Architecture
-
-```text
-agritech/
-├── backend/          # Node/Express API server, Mongoose Models & Controllers
-└── frontend/         # React SPA Components, State Hooks & Interface Pages
+*Synced from Zaby LMS Capstone Workspace*
